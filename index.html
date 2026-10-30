@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sushi Showdown">
+<meta name="theme-color" content="#0a0b12">
+<link rel="apple-touch-icon" id="touchIcon" href="">
+<title>Sushi Showdown</title>
+<style>
+  :root {
+    --ink: #0a0b12;
+    --text: #f6f1ea;
+    --muted: #a49fb0;
+    --red: #ff4d5e;
+    --gold: #ffc93c;
+    --glass: linear-gradient(160deg, rgba(255,255,255,.11), rgba(255,255,255,.035));
+    --line: rgba(255,255,255,.13);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body { margin: 0; height: 100%; overflow: hidden; color: var(--text); background: var(--ink);
+    font-family: ui-rounded, "SF Pro Rounded", -apple-system, BlinkMacSystemFont, system-ui, sans-serif; touch-action: manipulation; }
+  body::before { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background:
+      radial-gradient(90% 45% at 50% -8%, rgba(255,77,94,.38), transparent 70%),
+      radial-gradient(70% 40% at 100% 100%, rgba(60,140,255,.22), transparent 70%),
+      radial-gradient(60% 35% at 0% 70%, rgba(180,90,255,.14), transparent 70%); }
+  body::after { content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: .09;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='22' viewBox='0 0 44 22'%3E%3Cg fill='none' stroke='white' stroke-width='1'%3E%3Ccircle cx='22' cy='22' r='20'/%3E%3Ccircle cx='22' cy='22' r='14'/%3E%3Ccircle cx='22' cy='22' r='8'/%3E%3Ccircle cx='0' cy='11' r='20'/%3E%3Ccircle cx='0' cy='11' r='14'/%3E%3Ccircle cx='0' cy='11' r='8'/%3E%3Ccircle cx='44' cy='11' r='20'/%3E%3Ccircle cx='44' cy='11' r='14'/%3E%3Ccircle cx='44' cy='11' r='8'/%3E%3C/g%3E%3C/svg%3E");
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%); mask-image: linear-gradient(to bottom, transparent 0%, #000 55%, #000 100%); }
+
+  .app { position: relative; z-index: 1; height: 100dvh; display: flex; flex-direction: column; gap: 10px;
+    padding: calc(env(safe-area-inset-top) + 10px) 12px calc(env(safe-area-inset-bottom) + 12px); }
+
+  /* header */
+  .top { display: flex; align-items: center; justify-content: space-between; padding: 0 4px; }
+  .brand { display: flex; align-items: baseline; gap: 8px; }
+  .brand .kanji { font-family: "Hiragino Mincho ProN", "Yu Mincho", serif; font-size: 22px; font-weight: 800; color: var(--red);
+    text-shadow: 0 0 14px rgba(255,77,94,.7); }
+  .brand .title { font-size: 13px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; color: var(--text); opacity: .9; }
+  .gear { width: 38px; height: 38px; border-radius: 12px; border: 1px solid var(--line); background: var(--glass); color: var(--text);
+    display: grid; place-items: center; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .gear:active { transform: scale(.92); }
+  .gear svg { width: 20px; height: 20px; }
+
+  /* totals */
+  .totals { position: relative; overflow: hidden; border-radius: 24px; border: 1px solid var(--line); background: var(--glass);
+    backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); padding: 10px 16px 10px;
+    display: grid; grid-template-columns: 1fr 1.5fr; align-items: end; gap: 6px;
+    box-shadow: 0 10px 40px -14px rgba(255,77,94,.55), inset 0 1px 0 rgba(255,255,255,.12); }
+  .sun { position: absolute; right: -34px; top: -62px; width: 190px; height: 190px; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(circle at 40% 40%, #ff8d6b, #ff4d5e 55%, #c2203f 100%); opacity: .5; filter: blur(.5px);
+    box-shadow: 0 0 60px rgba(255,77,94,.55); }
+  .stat { position: relative; display: flex; flex-direction: column; }
+  .stat .label { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+  .stat .value { font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
+  .stat.pieces .value { font-size: clamp(38px, 11vw, 54px); }
+  .stat.points { align-items: flex-end; text-align: right; }
+  .stat.points .value { font-size: clamp(54px, 17vw, 80px);
+    background: linear-gradient(180deg, #fff 10%, #ffd98a 60%, #ff9a5a 100%); -webkit-background-clip: text; background-clip: text; color: transparent;
+    filter: drop-shadow(0 4px 18px rgba(255,150,80,.45)); }
+  .rank { grid-column: 1 / -1; position: relative; display: flex; align-items: center; gap: 10px; margin-top: 2px; }
+  .rank .bar { flex: 1; height: 5px; border-radius: 5px; background: rgba(255,255,255,.12); overflow: hidden; }
+  .rank .fill { height: 100%; width: 0%; border-radius: 5px; background: linear-gradient(90deg, var(--red), var(--gold)); transition: width .4s cubic-bezier(.2,.9,.3,1.2); box-shadow: 0 0 10px rgba(255,150,80,.8); }
+  .rank .name { font-size: 12px; font-weight: 800; letter-spacing: .08em; color: var(--gold); white-space: nowrap; }
+  .bump { animation: bump .28s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes bump { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+
+  /* grid */
+  .grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; grid-auto-rows: minmax(0, 1fr); gap: 10px; }
+  .card { --c: #fff; position: relative; overflow: hidden; border-radius: 22px; border: 1px solid var(--line); color: var(--text); font: inherit; padding: 8px 8px 8px;
+    background: var(--glass); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+    box-shadow: 0 10px 30px -14px var(--c), inset 0 1px 0 rgba(255,255,255,.14);
+    transition: transform .1s cubic-bezier(.2,1.4,.4,1), border-color .15s; }
+  .card::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--c) 30%, transparent), transparent 75%); }
+  .card::after { content: ""; position: absolute; left: 18%; right: 18%; top: 0; height: 2px; border-radius: 2px; background: var(--c); box-shadow: 0 0 14px var(--c); }
+  .card:active, .card.press { transform: scale(.955); border-color: color-mix(in srgb, var(--c) 70%, white); }
+  .card .chip { position: absolute; top: 8px; right: 8px; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 99px;
+    background: rgba(0,0,0,.35); color: var(--c); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); font-variant-numeric: tabular-nums; }
+  .card .ico { position: relative; width: min(11.5dvh, 74px); height: min(11.5dvh, 74px); flex: none; margin-top: 2px;
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
+  .card .ico svg { width: 100%; height: 100%; display: block; }
+  .card .name { position: relative; font-size: clamp(13px, 3.9vw, 16px); font-weight: 800; letter-spacing: .02em; text-align: center; line-height: 1.1; }
+  .card .count { position: relative; font-size: clamp(30px, 5.6dvh, 44px); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1;
+    color: var(--c); text-shadow: 0 0 18px color-mix(in srgb, var(--c) 70%, transparent); }
+
+  /* actions */
+  .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .act { height: 50px; border-radius: 16px; font: inherit; font-size: 15px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    border: 1px solid var(--line); background: var(--glass); color: var(--text); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .act:active { transform: scale(.97); }
+  .act.reset { color: var(--red); }
+  .act:disabled { opacity: .35; }
+
+  /* floaters + confetti */
+  .float { position: fixed; z-index: 50; pointer-events: none; font-weight: 900; font-size: 22px; color: var(--c, #fff);
+    text-shadow: 0 0 14px var(--c, #fff), 0 2px 6px rgba(0,0,0,.6); animation: floatUp .85s ease-out forwards; transform: translate(-50%, -50%); }
+  @keyframes floatUp { 0% { opacity: 0; transform: translate(-50%, -30%) scale(.6); } 15% { opacity: 1; transform: translate(-50%, -70%) scale(1.15); }
+    100% { opacity: 0; transform: translate(-50%, -260%) scale(1); } }
+  .bit { position: fixed; z-index: 60; pointer-events: none; font-size: 22px; left: 50%; top: 30%;
+    animation: bit 1.1s cubic-bezier(.15,.7,.3,1) forwards; }
+  @keyframes bit { 0% { opacity: 1; transform: translate(-50%, -50%) scale(.4) rotate(0); }
+    100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1.2) rotate(var(--rot)); } }
+  .toast { position: fixed; z-index: 70; left: 50%; top: calc(env(safe-area-inset-top) + 64px); transform: translateX(-50%) translateY(-12px); opacity: 0; pointer-events: none;
+    padding: 8px 16px; border-radius: 99px; font-weight: 900; letter-spacing: .06em; font-size: 14px; white-space: nowrap;
+    background: linear-gradient(90deg, var(--red), #ff8a4a); color: #fff; box-shadow: 0 8px 30px rgba(255,77,94,.55); transition: all .3s cubic-bezier(.2,1.4,.4,1); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* settings sheet */
+  .scrim { position: fixed; inset: 0; z-index: 80; background: rgba(5,5,10,.6); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    opacity: 0; pointer-events: none; transition: opacity .25s; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; z-index: 90; left: 0; right: 0; bottom: 0; max-height: 92dvh; overflow-y: auto;
+    border-radius: 28px 28px 0 0; border: 1px solid var(--line); border-bottom: 0;
+    background: linear-gradient(180deg, #1b1624, #0f0d16); padding: 10px 16px calc(env(safe-area-inset-bottom) + 16px);
+    transform: translateY(105%); transition: transform .35s cubic-bezier(.2,.9,.25,1); box-shadow: 0 -20px 60px rgba(0,0,0,.6); }
+  .sheet.open { transform: translateY(0); }
+  .grab { width: 40px; height: 5px; border-radius: 5px; background: rgba(255,255,255,.22); margin: 2px auto 12px; }
+  .sheet h2 { margin: 0 0 2px; font-size: 20px; font-weight: 900; }
+  .sheet .sub { margin: 0 0 12px; font-size: 13px; color: var(--muted); line-height: 1.35; }
+  .row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; margin-bottom: 8px; border-radius: 16px; border: 1px solid var(--line); background: rgba(255,255,255,.04); }
+  .row .rico { width: 38px; height: 38px; flex: none; }
+  .row .rico svg { width: 100%; height: 100%; }
+  .row .rname { flex: 1; font-weight: 800; font-size: 16px; }
+  .stepper { display: flex; align-items: center; gap: 6px; }
+  .stepper button { width: 36px; height: 36px; border-radius: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.08); color: var(--text);
+    font-size: 22px; font-weight: 800; line-height: 1; padding: 0; }
+  .stepper button:active { transform: scale(.9); background: rgba(255,255,255,.16); }
+  .stepper input { width: 62px; height: 36px; text-align: center; border-radius: 11px; border: 1px solid var(--line); background: rgba(0,0,0,.35); color: var(--gold);
+    font: inherit; font-size: 17px; font-weight: 900; -webkit-user-select: text; user-select: text; }
+  .stepper input:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  .sheet .foot { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .sheet .foot button { height: 48px; border-radius: 15px; font: inherit; font-weight: 800; font-size: 15px; letter-spacing: .04em; border: 1px solid var(--line); background: rgba(255,255,255,.06); color: var(--text); }
+  .sheet .foot .done { background: linear-gradient(90deg, var(--red), #ff8a4a); border: 0; color: #fff; box-shadow: 0 8px 24px rgba(255,77,94,.4); }
+
+  /* extras */
+  .top { gap: 10px; }
+  .timer { font-size: 12px; font-weight: 800; letter-spacing: .08em; color: var(--gold); padding: 7px 12px; border-radius: 99px; border: 1px solid var(--line);
+    background: rgba(0,0,0,.28); font-variant-numeric: tabular-nums; opacity: 0; transform: translateY(-4px); transition: opacity .4s, transform .4s; min-width: 74px; text-align: center; }
+  .timer.on { opacity: 1; transform: none; }
+  .sun { animation: sunPulse 5s ease-in-out infinite; }
+  @keyframes sunPulse { 0%,100% { transform: scale(1); opacity: .5; } 50% { transform: scale(1.07); opacity: .64; } }
+  .card .ico { animation: bob 3.8s ease-in-out infinite; }
+  .card:nth-child(2) .ico { animation-delay: -.8s; } .card:nth-child(3) .ico { animation-delay: -1.6s; }
+  .card:nth-child(4) .ico { animation-delay: -2.2s; } .card:nth-child(5) .ico { animation-delay: -2.9s; } .card:nth-child(6) .ico { animation-delay: -3.4s; }
+  @keyframes bob { 0%,100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-3px) rotate(2.5deg); } }
+  .card .ico.hop { animation: hop .42s cubic-bezier(.2,1.5,.4,1); }
+  @keyframes hop { 0% { transform: translateY(0) scale(1) rotate(0); } 40% { transform: translateY(-10px) scale(1.18) rotate(14deg); } 100% { transform: translateY(0) scale(1) rotate(0); } }
+  .card .ripple { position: absolute; left: 50%; top: 34%; width: 20px; height: 20px; margin: -10px 0 0 -10px; border-radius: 50%; pointer-events: none;
+    border: 2px solid var(--c); opacity: 0; animation: ripple .55s ease-out; }
+  @keyframes ripple { 0% { opacity: .9; transform: scale(1); } 100% { opacity: 0; transform: scale(9); } }
+  .dialog { position: fixed; z-index: 100; left: 50%; top: 50%; width: min(86vw, 330px); padding: 22px 18px 16px; text-align: center;
+    border-radius: 26px; border: 1px solid var(--line); background: linear-gradient(180deg, #221a2b, #120f19); box-shadow: 0 30px 80px rgba(0,0,0,.7), 0 0 50px -10px rgba(255,77,94,.4);
+    opacity: 0; pointer-events: none; transform: translate(-50%, -46%) scale(.9); transition: all .25s cubic-bezier(.2,1.3,.4,1); }
+  .dialog.open { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+  .dialog .big { font-size: 40px; margin-bottom: 4px; }
+  .dialog h3 { margin: 0 0 6px; font-size: 20px; font-weight: 900; }
+  .dialog p { margin: 0 0 16px; font-size: 14px; line-height: 1.4; color: var(--muted); }
+  .dialog .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .dialog button { height: 48px; border-radius: 15px; font: inherit; font-weight: 800; font-size: 15px; border: 1px solid var(--line); background: rgba(255,255,255,.07); color: var(--text); }
+  .dialog button:active { transform: scale(.96); }
+  .dialog .danger { background: linear-gradient(90deg, #ff3d5a, #ff7a4a); border: 0; color: #fff; box-shadow: 0 8px 24px rgba(255,77,94,.45); }
+  /* short phones (iPhone SE / mini, or browser chrome showing) */
+  @media (max-height: 740px) {
+    .app { gap: 8px; padding-top: calc(env(safe-area-inset-top) + 8px); }
+    .grid { gap: 8px; }
+    .totals { padding: 8px 14px; }
+    .stat.pieces .value { font-size: 36px; }
+    .stat.points .value { font-size: 54px; }
+    .card { padding: 6px; }
+    .card .ico { width: 50px; height: 50px; }
+    .card .name { font-size: 13px; }
+    .card .count { font-size: 30px; }
+    .card .chip { top: 6px; right: 6px; font-size: 10px; padding: 2px 6px; }
+    .act { height: 44px; }
+  }
+  @media (max-height: 610px) {
+    .stat.points .value { font-size: 44px; } .stat.pieces .value { font-size: 30px; }
+    .card .ico { width: 40px; height: 40px; } .card .count { font-size: 26px; } .card .name { font-size: 12px; }
+    .act { height: 40px; } .top { margin-top: -2px; } .gear { width: 34px; height: 34px; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand"><span class="kanji">寿司</span><span class="title">Showdown</span></div>
+    <div class="timer" id="timer">⏱ 0:00</div>
+    <button class="gear" id="gear" aria-label="Edit point values">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+
+  <div class="totals">
+    <div class="sun"></div>
+    <div class="stat pieces"><span class="label">Pieces</span><span class="value" id="totalPieces">0</span></div>
+    <div class="stat points"><span class="label">Points</span><span class="value" id="totalPoints">0</span></div>
+    <div class="rank"><div class="bar"><div class="fill" id="rankFill"></div></div><div class="name" id="rankName">READY…</div></div>
+  </div>
+
+  <div class="grid" id="grid"></div>
+
+  <div class="actions">
+    <button class="act" id="undo">↩ Undo</button>
+    <button class="act reset" id="reset">Reset</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="scrim" id="dscrim" style="z-index:95"></div>
+<div class="dialog" id="dialog" role="alertdialog" aria-label="Reset counts">
+  <div class="big">🍣</div>
+  <h3>Wipe the plate?</h3>
+  <p>This sets every count and your points back to zero. Your point values stay as they are.</p>
+  <div class="btns"><button id="dCancel">Keep eating</button><button class="danger" id="dOk">Reset</button></div>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet" role="dialog" aria-label="Point values">
+  <div class="grab"></div>
+  <h2>Point values</h2>
+  <p class="sub">Change what each piece is worth. Updates apply to everything, including pieces you've already logged.</p>
+  <div id="rows"></div>
+  <div class="foot">
+    <button id="defaults">Reset defaults</button>
+    <button class="done" id="done">Done</button>
+  </div>
+</div>
+
+<script>
+  // ---------- config ----------
+  // Default point values + colors. Edit values in-app via the gear, or change the defaults here.
+  const ITEMS = [
+    { id: 'normal',   name: 'Normal',       pts: 1,    c: '#4fe0c4' },
+    { id: 'nigiri',   name: 'Nigiri',       pts: 1.25, c: '#ff8a6b' },
+    { id: 'fried',    name: 'Fried',        pts: 1.5,  c: '#ffc93c' },
+    { id: 'friedEnd', name: 'Fried End',    pts: 1.75, c: '#ff9a2e' },
+    { id: 'godzilla', name: 'Godzilla',     pts: 2,    c: '#3dff8f' },
+    { id: 'godEnd',   name: 'Godzilla End', pts: 2.25, c: '#c8ff3d' },
+  ];
+  const RANKS = [ [0,'READY…'], [3,'WARMING UP'], [10,'GETTING SERIOUS'], [20,'SUSHI MACHINE'], [35,'ABSOLUTE UNIT'], [50,'GODZILLA MODE'], [75,'SUSHI LEGEND'], [100,'MYTHICAL'] ];
+  const MILESTONES = { 10: '🍣 10 PIECES!', 20: '🔥 20 PIECES!', 30: '⚡ 30 PIECES!', 40: '🐉 40 PIECES!', 50: '👑 50 PIECES!' };
+  const HKEY = 'sushiShowdown.history.v1', VKEY = 'sushiShowdown.values.v1', SKEY = 'sushiShowdown.start.v1';
+
+  // ---------- state ----------
+  const ids = new Set(ITEMS.map(i => i.id));
+  const load = (k, d) => { try { const v = JSON.parse(localStorage.getItem(k)); return v == null ? d : v; } catch (e) { return d; } };
+  let history = load(HKEY, []); if (!Array.isArray(history)) history = []; history = history.filter(id => ids.has(id));
+  let values = {}; const saved = load(VKEY, {});
+  ITEMS.forEach(i => { const n = Number(saved && saved[i.id]); values[i.id] = isFinite(n) && n >= 0 && saved && saved[i.id] != null ? n : i.pts; });
+  let startTs = load(SKEY, null); if (typeof startTs !== 'number' || !history.length) startTs = null;
+  const save = () => { try { localStorage.setItem(HKEY, JSON.stringify(history)); localStorage.setItem(VKEY, JSON.stringify(values)); localStorage.setItem(SKEY, JSON.stringify(startTs)); } catch (e) {} };
+
+  const $ = id => document.getElementById(id);
+  const fmt = n => (Math.round(n * 100) / 100).toString();
+
+  // ---------- icons ----------
+  const rnd = s => { const x = Math.sin(s * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+  function rollIcon(kind, isEnd) {
+    const cx = 36, cy = 36;
+    let s = '';
+    const outerFill = { normal: '#16261f', fried: '#d9992b', godzilla: '#13904f' }[kind];
+    const edge = { normal: '#2f5144', fried: '#ffd479', godzilla: '#6dffae' }[kind];
+    const fill = { normal: '#ff7a59', fried: '#ff7a59', godzilla: '#ff3d5a' }[kind];
+    // spikes for godzilla
+    if (kind === 'godzilla') {
+      for (let i = 0; i < 12; i++) {
+        const a = i / 12 * Math.PI * 2, a1 = a - .17, a2 = a + .17;
+        const p = (r, ang) => `${(cx + Math.cos(ang) * r).toFixed(1)},${(cy + Math.sin(ang) * r).toFixed(1)}`;
+        s += `<polygon points="${p(24, a1)} ${p(34, a)} ${p(24, a2)}" fill="#25d77e" stroke="#9bffc9" stroke-width=".8" stroke-linejoin="round"/>`;
+      }
+    }
+    // outer body (jagged if end piece)
+    if (isEnd) {
+      let pts = '';
+      for (let i = 0; i < 28; i++) {
+        const a = i / 28 * Math.PI * 2, r = (i % 2 ? 23.5 : 27.5) + (rnd(i + 3) - .5) * 2;
+        pts += `${(cx + Math.cos(a) * r).toFixed(1)},${(cy + Math.sin(a) * r).toFixed(1)} `;
+      }
+      s += `<polygon points="${pts}" fill="${outerFill}" stroke="${edge}" stroke-width="1.4" stroke-linejoin="round"/>`;
+    } else {
+      s += `<circle cx="${cx}" cy="${cy}" r="27" fill="${outerFill}" stroke="${edge}" stroke-width="1.4"/>`;
+    }
+    // crumbs for fried
+    if (kind === 'fried') {
+      const cols = ['#ffe08a', '#b8741a', '#f6c453', '#fff1c2'];
+      for (let i = 0; i < 26; i++) {
+        const a = rnd(i) * 6.283, r = 22.5 + rnd(i + 40) * 5.5;
+        s += `<circle cx="${(cx + Math.cos(a) * r).toFixed(1)}" cy="${(cy + Math.sin(a) * r).toFixed(1)}" r="${(1 + rnd(i + 9) * 1.6).toFixed(1)}" fill="${cols[i % 4]}"/>`;
+      }
+    }
+    // scales for godzilla
+    if (kind === 'godzilla') {
+      for (let i = 0; i < 10; i++) {
+        const a = i / 10 * 6.283 + .3;
+        s += `<path d="M${(cx + Math.cos(a) * 21.5 - 2.5).toFixed(1)} ${(cy + Math.sin(a) * 21.5).toFixed(1)} q2.5 -3 5 0" fill="none" stroke="#7bffb8" stroke-width="1" stroke-linecap="round"/>`;
+      }
+    }
+    // rice
+    s += `<circle cx="${cx}" cy="${cy}" r="19.5" fill="#fbf6e9"/>`;
+    for (let i = 0; i < 16; i++) {
+      const a = rnd(i + 70) * 6.283, r = 6 + rnd(i + 90) * 12.5;
+      s += `<ellipse cx="${(cx + Math.cos(a) * r).toFixed(1)}" cy="${(cy + Math.sin(a) * r).toFixed(1)}" rx="1.9" ry=".9" transform="rotate(${(rnd(i) * 180).toFixed(0)} ${(cx + Math.cos(a) * r).toFixed(1)} ${(cy + Math.sin(a) * r).toFixed(1)})" fill="#e7dec6"/>`;
+    }
+    // filling
+    s += `<circle cx="${cx}" cy="${cy}" r="9" fill="${fill}"/><circle cx="${cx - 2.5}" cy="${cy - 3}" r="3.2" fill="#fff" opacity=".35"/>`;
+    if (kind === 'normal') s += `<circle cx="${cx + 8}" cy="${cy - 7}" r="3.4" fill="#6fd887"/><circle cx="${cx + 8}" cy="${cy - 7}" r="1.5" fill="#c9f5a8"/>`;
+    if (kind === 'fried') s += `<path d="M18 28 q6 -6 12 0 t12 0 t12 0" fill="none" stroke="#fff0d8" stroke-width="2.2" stroke-linecap="round" opacity=".9"/>`;
+    if (kind === 'godzilla') s += `<path d="M36 22 q4 5 2 9 q-1 -3 -4 -2 q-3 -4 2 -7z" fill="#ffd23c"/>`;
+    // END ribbon
+    if (isEnd) s += `<g transform="rotate(-8 56 58)"><rect x="42" y="52" width="27" height="13" rx="6.5" fill="#0a0b12" stroke="#fff" stroke-width="1.2"/><text x="55.5" y="61.8" text-anchor="middle" font-size="8.5" font-weight="900" fill="#fff" font-family="ui-rounded,system-ui,sans-serif" letter-spacing=".5">END</text></g>`;
+    return `<svg viewBox="-2 -2 76 76" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  }
+  function nigiriIcon() {
+    let g = '';
+    for (let i = 0; i < 12; i++) g += `<ellipse cx="${(18 + rnd(i + 5) * 36).toFixed(1)}" cy="${(46 + rnd(i + 25) * 8).toFixed(1)}" rx="1.9" ry=".9" fill="#e7dec6"/>`;
+    return `<svg viewBox="-2 -2 76 76" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="36" cy="62" rx="26" ry="4" fill="#000" opacity=".35"/>
+      <rect x="9" y="38" width="54" height="22" rx="11" fill="#fbf6e9" stroke="#e7dec6" stroke-width="1"/>${g}
+      <path d="M5 40 C10 18 62 18 67 40 C58 49 14 49 5 40Z" fill="#ff8a6b" stroke="#ffb59f" stroke-width="1.2"/>
+      <path d="M12 38 C22 26 50 26 60 38" fill="none" stroke="#fff3ea" stroke-width="2.4" stroke-linecap="round" opacity=".75"/>
+      <path d="M16 43 C26 33 46 33 56 43" fill="none" stroke="#fff3ea" stroke-width="2" stroke-linecap="round" opacity=".55"/>
+      <path d="M22 28 q14 -7 26 0" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".35"/>
+    </svg>`;
+  }
+  const ICONS = {
+    normal: rollIcon('normal', false), nigiri: nigiriIcon(),
+    fried: rollIcon('fried', false), friedEnd: rollIcon('fried', true),
+    godzilla: rollIcon('godzilla', false), godEnd: rollIcon('godzilla', true),
+  };
+
+  // ---------- build UI ----------
+  const grid = $('grid'), rows = $('rows');
+  const refs = {};
+  ITEMS.forEach(item => {
+    const b = document.createElement('button');
+    b.className = 'card'; b.style.setProperty('--c', item.c);
+    b.innerHTML = `<span class="chip"></span><div class="ico">${ICONS[item.id]}</div><div class="name">${item.name}</div><div class="count">0</div>`;
+    refs[item.id] = { chip: b.querySelector('.chip'), count: b.querySelector('.count'), card: b };
+    b.addEventListener('click', e => add(item, e));
+    grid.appendChild(b);
+
+    const r = document.createElement('div'); r.className = 'row';
+    r.innerHTML = `<div class="rico">${ICONS[item.id]}</div><div class="rname">${item.name}</div>
+      <div class="stepper"><button type="button" aria-label="less">−</button><input inputmode="decimal" autocomplete="off" aria-label="${item.name} points"><button type="button" aria-label="more">+</button></div>`;
+    const [minus, plus] = r.querySelectorAll('button'), inp = r.querySelector('input');
+    refs[item.id].input = inp;
+    const setV = v => { v = Math.max(0, Math.round(v * 100) / 100); values[item.id] = v; save(); render(); };
+    minus.addEventListener('click', () => setV(values[item.id] - .25));
+    plus.addEventListener('click', () => setV(values[item.id] + .25));
+    inp.addEventListener('change', () => { const n = parseFloat(inp.value.replace(',', '.')); if (isFinite(n)) setV(n); else render(); });
+    inp.addEventListener('focus', () => setTimeout(() => inp.select(), 0));
+    rows.appendChild(r);
+  });
+
+  // ---------- render ----------
+  function totals() {
+    const counts = {}; let pts = 0;
+    history.forEach(id => { counts[id] = (counts[id] || 0) + 1; pts += values[id]; });
+    return { counts, pts };
+  }
+  let lastPts = 0, lastRank = -1, shownPts = 0, tweenId = 0, toastT;
+  function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('show'), 1900); }
+  function tweenPts(to) {
+    const from = shownPts, id = ++tweenId, t0 = performance.now(), el = $('totalPoints');
+    if (from === to) { el.textContent = fmt(to); return; }
+    const step = now => { if (id !== tweenId) return; const k = Math.min(1, (now - t0) / 380), e = 1 - Math.pow(1 - k, 3);
+      shownPts = k === 1 ? to : from + (to - from) * e; el.textContent = fmt(shownPts); if (k < 1) requestAnimationFrame(step); };
+    requestAnimationFrame(step);
+  }
+  function tick() {
+    const el = $('timer'); if (!startTs) { el.classList.remove('on'); return; }
+    const s = Math.max(0, Math.floor((Date.now() - startTs) / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), pad = n => String(n).padStart(2, '0');
+    el.textContent = '⏱ ' + (h ? h + ':' + pad(m) : m) + ':' + pad(s % 60); el.classList.add('on');
+  }
+  setInterval(tick, 1000);
+  function render(bumpId) {
+    const { counts, pts } = totals();
+    ITEMS.forEach(i => {
+      refs[i.id].count.textContent = counts[i.id] || 0;
+      refs[i.id].chip.textContent = fmt(values[i.id]) + ' pt' + (values[i.id] === 1 ? '' : 's');
+      if (document.activeElement !== refs[i.id].input) refs[i.id].input.value = fmt(values[i.id]);
+    });
+    $('totalPieces').textContent = history.length;
+    tweenPts(pts);
+    $('undo').disabled = history.length === 0; $('reset').disabled = history.length === 0;
+    if (!history.length && startTs) { startTs = null; save(); }
+    tick();
+    // rank
+    let ri = 0; RANKS.forEach((r, i) => { if (pts >= r[0]) ri = i; });
+    $('rankName').textContent = RANKS[ri][1];
+    if (bumpId && lastRank >= 0 && ri > lastRank) toast('⬆ RANK UP · ' + RANKS[ri][1]);
+    lastRank = ri;
+    const lo = RANKS[ri][0], hi = RANKS[ri + 1] ? RANKS[ri + 1][0] : lo + 1;
+    $('rankFill').style.width = (RANKS[ri + 1] ? Math.min(100, (pts - lo) / (hi - lo) * 100) : 100) + '%';
+    if (bumpId) {
+      [refs[bumpId].count, $('totalPoints'), $('totalPieces')].forEach(el => { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); });
+    }
+    lastPts = pts;
+  }
+
+  // ---------- actions ----------
+  function add(item, e) {
+    if (!startTs) startTs = Date.now();
+    history.push(item.id); save(); render(item.id);
+    const ic = refs[item.id].card.querySelector('.ico'); ic.classList.remove('hop'); void ic.offsetWidth; ic.classList.add('hop');
+    const rp = document.createElement('span'); rp.className = 'ripple'; refs[item.id].card.appendChild(rp); setTimeout(() => rp.remove(), 600);
+    const c = refs[item.id].card; c.classList.add('press'); setTimeout(() => c.classList.remove('press'), 110);
+    const f = document.createElement('div'); f.className = 'float'; f.style.setProperty('--c', item.c);
+    f.textContent = '+' + fmt(values[item.id]);
+    f.style.left = (e && e.clientX ? e.clientX : c.getBoundingClientRect().left + c.offsetWidth / 2) + 'px';
+    f.style.top = (e && e.clientY ? e.clientY : c.getBoundingClientRect().top + c.offsetHeight / 2) + 'px';
+    document.body.appendChild(f); setTimeout(() => f.remove(), 900);
+    if (history.length % 10 === 0) celebrate(history.length);
+  }
+  function celebrate(n) {
+    toast(MILESTONES[n] || `🍣 ${n} PIECES!`);
+    const em = ['🍣', '🍙', '🍤', '✨', '🔥', '🐉'];
+    for (let i = 0; i < 18; i++) {
+      const b = document.createElement('div'); b.className = 'bit'; b.textContent = em[i % em.length];
+      const a = rnd(i + n) * 6.283, d = 90 + rnd(i + 11) * 170;
+      b.style.setProperty('--dx', Math.cos(a) * d + 'px'); b.style.setProperty('--dy', Math.sin(a) * d + 60 + 'px'); b.style.setProperty('--rot', (rnd(i) * 720 - 360) + 'deg');
+      document.body.appendChild(b); setTimeout(() => b.remove(), 1200);
+    }
+  }
+  $('undo').addEventListener('click', () => { history.pop(); save(); render(); });
+  const openDlg = o => { $('dialog').classList.toggle('open', o); $('dscrim').classList.toggle('open', o); };
+  $('reset').addEventListener('click', () => { if (history.length) openDlg(true); });
+  $('dCancel').addEventListener('click', () => openDlg(false));
+  $('dscrim').addEventListener('click', () => openDlg(false));
+  $('dOk').addEventListener('click', () => { history = []; startTs = null; save(); render(); openDlg(false); toast('🧹 Fresh plate!'); });
+
+  // settings sheet
+  const openSheet = o => { $('sheet').classList.toggle('open', o); $('scrim').classList.toggle('open', o); if (!o && document.activeElement) document.activeElement.blur(); };
+  $('gear').addEventListener('click', () => openSheet(true));
+  $('scrim').addEventListener('click', () => openSheet(false));
+  $('done').addEventListener('click', () => openSheet(false));
+  $('defaults').addEventListener('click', () => { ITEMS.forEach(i => values[i.id] = i.pts); save(); render(); });
+
+  // keep screen awake (iOS 16.4+)
+  async function keepAwake() { try { if ('wakeLock' in navigator) await navigator.wakeLock.request('screen'); } catch (e) {} }
+  keepAwake(); document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') keepAwake(); });
+
+  // home-screen icon (generated, so no extra files needed)
+  try {
+    const cv = document.createElement('canvas'); cv.width = cv.height = 180; const x = cv.getContext('2d');
+    const bg = x.createLinearGradient(0, 0, 0, 180); bg.addColorStop(0, '#2a0f1d'); bg.addColorStop(1, '#0a0b12'); x.fillStyle = bg; x.fillRect(0, 0, 180, 180);
+    const sun = x.createRadialGradient(80, 70, 8, 90, 90, 70); sun.addColorStop(0, '#ff8d6b'); sun.addColorStop(.6, '#ff4d5e'); sun.addColorStop(1, '#c2203f');
+    x.fillStyle = sun; x.beginPath(); x.arc(90, 90, 66, 0, 7); x.fill();
+    x.fillStyle = '#fff'; x.font = '800 78px "Hiragino Mincho ProN", serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('寿', 90, 94);
+    $('touchIcon').href = cv.toDataURL('image/png');
+  } catch (e) {}
+
+  render();
+</script>
+</body>
+</html>
